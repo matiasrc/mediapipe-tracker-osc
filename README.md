@@ -1,34 +1,57 @@
-navegar hasta la carpeta del proyecto
+# Mediapipe Tracker OSC
 
----> cd nombreDeLaCarpeta
+Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, enviando datos vía **OSC** para usar en otros programas (ej. Pure Data, TouchDesigner, Max/MSP).
 
-1. Eliminar el entorno virtual actual (si no lo estás usando para otra cosa)
-rm -rf ~/mediapipe-env
+---
 
-2. Crear uno nuevo usando Python 3.10.10
-python3.10 --version
+## 🚀 Requisitos previos
 
-!Si responde Python 3.10.10, entonces creamos el nuevo entorno:
+* **Python 3.10**
 
-python3.10 -m venv ~/mediapipe-env
+  * **Mac**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-macos11.pkg)
+  * **Windows**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe)
 
-3. Activar el entorno
-source ~/mediapipe-env/bin/activate
+⚠️ En Windows, durante la instalación marcar la opción **"Add Python to PATH"**.
 
-4. Verificá la versión de Python en el entorno
+* Una **cámara web** conectada al equipo.
 
-python --version
+---
 
-!Debe decir: Python 3.10.10
+## 💻 Cómo usar
 
-5. Instalá las dependencias
+### En **Mac**
 
-pip install -r requirements.txt
+1. Descargar la carpeta completa `mediapipe-tracker-osc`.
+2. Dar permisos de ejecución al script (solo la primera vez):
 
-6. Instalá osc
+   ```bash
+   chmod +x launch.sh
+   ```
+3. Hacer doble click en `launch.sh`.
+4. La primera vez puede tardar un poco porque instala dependencias.
+5. Se abrirá la aplicación.
 
-pip install python-osc
+---
 
-7. Ejecutá el programa
+### En **Windows**
 
-python main.py
+1. Descargar la carpeta completa `mediapipe-tracker-osc`.
+2. Hacer doble click en `launch.bat`.
+3. La primera vez puede tardar unos minutos porque instala dependencias.
+4. Se abrirá la aplicación.
+
+---
+
+## 📦 Detalles técnicos
+
+* El script crea automáticamente un entorno virtual (`mediapipe-env`) en tu usuario.
+* Instala todas las dependencias necesarias (`mediapipe`, `opencv`, `python-osc`, etc.).
+* Cada vez que quieras abrir la app, solo tenés que hacer doble click en `launch.sh` (Mac) o `launch.bat` (Windows).
+
+---
+
+## 📝 Notas
+
+* **No es necesario instalar nada más** aparte de Python 3.10.
+* Si ya tenías otra versión de Python instalada, **no hay problema** siempre y cuando también tengas Python 3.10.
+* La primera ejecución puede tardar porque instala librerías, luego abrirá mucho más rápido.
