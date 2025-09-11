@@ -1,0 +1,4 @@
+mediapipe
+opencv-python
+PyQt5
+python-osc
