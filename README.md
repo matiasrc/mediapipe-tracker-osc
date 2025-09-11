@@ -3,6 +3,19 @@
 Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, enviando datos vía **OSC** para usar en otros programas (ej. Pure Data, TouchDesigner, Max/MSP).
 
 ---
+## 📖 Índice
+
+- [🚀 Requisitos previos](#-requisitos-previos)  
+- [💻 Cómo usar](#-cómo-usar)  
+  - [En Mac](#en-mac)  
+  - [En Windows](#en-windows)  
+- [📦 Detalles técnicos](#-detalles-técnicos)  
+- [📡 Datos enviados por OSC](#-datos-enviados-por-osc)  
+- [📑 Formato del Payload OSC](#-formato-del-payload-osc)  
+- [🛠️ Troubleshooting (Errores comunes)](#️-troubleshooting-errores-comunes)  
+- [📝 Notas](#-notas)  
+
+---
 
 ## 🚀 Requisitos previos
 
