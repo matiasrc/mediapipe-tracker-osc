@@ -37,16 +37,24 @@ class FaceModel:
 
     def get_osc_packets(self, frame_w, frame_h):
         packets = []
-        n = len(self._last_faces)
+        
+        # Se filtran las caras para asegurar que tengan al menos 468 puntos
+        valid_faces = [pts for pts in self._last_faces if len(pts) >= 468]
+        n = len(valid_faces)
+
         if n > 0:
             payload = [int(frame_w), int(frame_h), int(n)]
-            for pts in self._last_faces:
-                payload.append(float(1.0))
-                for (nx, ny, score) in pts:
+            for pts in valid_faces:
+                payload.append(float(1.0)) # score por cara
+                # Se itera solo hasta 468 para asegurar un tamaño de paquete consistente
+                for i in range(468):
+                    nx, ny, score = pts[i]
                     x = float(nx) if nx is not None else 0.0
                     y = float(ny) if ny is not None else 0.0
                     score = float(score) if score is not None else 0.0
                     payload.extend([x, y, score])
-            packets.append(("/faces/arr", payload))
+            if len(payload) > 3: # Solo enviar si se añadieron datos de caras
+                packets.append(("/faces/arr", payload))
 
         return packets
+

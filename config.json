@@ -1,6 +1,6 @@
 {
   "ip": "127.0.0.1",
-  "port": 6448,
+  "port": 3333,
   "camera_index": 1,
   "model": "Hands"
 }

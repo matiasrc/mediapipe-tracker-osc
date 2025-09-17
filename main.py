@@ -41,7 +41,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("MediaPipe Demo")
+        self.setWindowTitle("MediaPipe tracker OSC")
         self.setFixedSize(960, 760)
 
         self.config = load_config()

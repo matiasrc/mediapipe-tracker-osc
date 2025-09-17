@@ -65,8 +65,7 @@ class HolisticModel:
                 cx, cy = int(lm.x * w), int(lm.y * h)
                 cv2.circle(overlay, (cx, cy), 1, (0, 255, 0), -1)
             self._last_data["face"] = pts
-            print(f"Face landmarks count: {len(pts)}")  # Debug print for face landmarks count
-
+            
         return overlay
 
     def get_osc_packets(self, frame_w, frame_h):
@@ -75,12 +74,12 @@ class HolisticModel:
         # --- POSE (17 puntos PoseNet) ---
         if "pose" in self._last_data and len(self._last_data["pose"]) >= 33:
             pts33 = self._last_data["pose"]
-            payload = [int(frame_w), int(frame_h), 1]  # siempre 1 pose como máximo
-            payload.append(1.0)  # score por pose
+            payload = [int(frame_w), int(frame_h), 1]
+            payload.append(1.0)
             for mi in POSENET_FROM_MEDIAPIPE:
                 nx, ny, score = pts33[mi]
-                x = float(nx * frame_w) if nx is not None else 0.0
-                y = float(ny * frame_h) if ny is not None else 0.0
+                x = float(nx) if nx is not None else 0.0
+                y = float(ny) if ny is not None else 0.0
                 s = float(score) if score is not None else 0.0
                 payload.extend([x, y, s])
             packets.append(("/poses/arr", payload))
@@ -94,24 +93,29 @@ class HolisticModel:
         if len(hands_list) > 0:
             payload = [int(frame_w), int(frame_h), int(len(hands_list))]
             for pts in hands_list:
-                payload.append(1.0)  # score por mano
+                payload.append(1.0)
                 for (nx, ny, score) in pts:
-                    x = float(nx * frame_w) if nx is not None else 0.0
-                    y = float(ny * frame_h) if ny is not None else 0.0
+                    x = float(nx) if nx is not None else 0.0
+                    y = float(ny) if ny is not None else 0.0
                     s = float(score) if score is not None else 0.0
                     payload.extend([x, y, s])
             packets.append(("/hands/arr", payload))
 
         # --- FACE (468 puntos completos) ---
-        if "face" in self._last_data and len(self._last_data["face"]) == 468:
+        # FIX: Se comprueba que haya AL MENOS 468 puntos y se envían solo los primeros 468.
+        # Esto soluciona el problema de que a veces Holistic devuelve más puntos (ej: con iris).
+        if "face" in self._last_data and len(self._last_data["face"]) >= 468:
             pts = self._last_data["face"]
             payload = [int(frame_w), int(frame_h), 1]
-            payload.append(1.0)  # score por cara
-            for (nx, ny, score) in pts:
-                x = float(nx * frame_w) if nx is not None else 0.0
-                y = float(ny * frame_h) if ny is not None else 0.0
+            payload.append(1.0)
+            # Se itera solo hasta 468 para asegurar un tamaño de paquete consistente
+            for i in range(468):
+                nx, ny, score = pts[i]
+                x = float(nx) if nx is not None else 0.0
+                y = float(ny) if ny is not None else 0.0
                 s = float(score) if score is not None else 0.0
                 payload.extend([x, y, s])
             packets.append(("/faces/arr", payload))
 
         return packets
+
