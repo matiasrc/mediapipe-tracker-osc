@@ -7,17 +7,16 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QComboBox,
     QPushButton, QHBoxLayout, QLineEdit, QSpinBox, QCheckBox
 )
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QImage, QPixmap, QFont
+from PyQt5.QtCore import Qt, QTimer
 
+# --- Todas las importaciones importantes van al principio para estabilidad ---
 from camera_thread import CameraThread
 from models.hands_model import HandsModel
 from models.pose_model import PoseModel
 from models.face_model import FaceModel
 from models.holistic_model import HolisticModel
 from osc_client import OSCClient
-
-
 
 CONFIG_FILE = "config.json"
 
@@ -41,89 +40,48 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("MediaPipe tracker OSC")
+        self.setWindowTitle("MediaPipe Tracker OSC")
         self.setFixedSize(960, 760)
 
         self.config = load_config()
+        
+        # --- Cargar componentes pesados desde el inicio ---
+        self.osc_client = OSCClient(self.config.get("ip"), self.config.get("port"))
+        self.camera_thread = CameraThread(osc_client=self.osc_client)
+        self.model = None
 
-        # ---- Preview ----
-        self.image_label = QLabel()
+        # ---- Vista previa (inicialmente muestra "Cargando...") ----
+        self.image_label = QLabel("Iniciando, por favor espere...")
         self.image_label.setFixedSize(960, 640)
         self.image_label.setAlignment(Qt.AlignCenter)
+        font = self.image_label.font()
+        font.setPointSize(20)
+        self.image_label.setFont(font)
+        self.image_label.setStyleSheet("background-color: #333; color: #EEE;")
 
-        # ---- Model selector ----
+        # ---- Controles (creados pero no conectados aun) ----
         self.model_selector = QComboBox()
         self.model_selector.addItems(["Hands", "Pose", "Face", "Holistic"])
-        self.model_selector.currentTextChanged.connect(self.change_model)
 
-        # ---- Camera selector ----
         self.camera_selector = QComboBox()
-        self.populate_cameras()
-        self.camera_selector.currentIndexChanged.connect(self.change_camera)
 
-        # ---- Start/Stop camera ----
         self.start_button = QPushButton("Iniciar")
-        self.start_button.clicked.connect(self.start_camera)
         self.stop_button = QPushButton("Detener")
-        self.stop_button.clicked.connect(self.stop_camera)
 
-        # ---- OSC controls ----
         self.osc_checkbox = QCheckBox("Enviar OSC")
-        self.osc_checkbox.stateChanged.connect(self.toggle_osc)
+        self.osc_checkbox.setChecked(True)
 
-        self.ip_edit = QLineEdit()
+        self.ip_edit = QLineEdit(self.config.get("ip", "127.0.0.1"))
         self.port_spin = QSpinBox()
         self.port_spin.setRange(1, 65535)
-
-        # Set initial values after widgets are created
-        self.ip_edit.setText(self.config.get("ip", "127.0.0.1"))
         self.port_spin.setValue(self.config.get("port", 3333))
-
-        # Connect IP and port changes to apply_osc_target
-        self.ip_edit.textChanged.connect(self.apply_osc_target)
-        self.port_spin.valueChanged.connect(self.apply_osc_target)
-
-        # ---- Thread & Model & OSC ----
-        self.osc_client = OSCClient(self.ip_edit.text(), self.port_spin.value())
-        self.camera_thread = CameraThread(osc_client=self.osc_client)
-
-        # Habilitar OSC por defecto y guardar en configuración
-        self.osc_checkbox.setChecked(True)
-        self.config["ip"] = self.ip_edit.text().strip()
-        self.config["port"] = int(self.port_spin.value())
-        save_config(self.config)
-
-        # Instantiate model according to current config
-        model_name = self.config.get("model", "Hands")
-        if model_name == "Hands":
-            self.model = HandsModel()
-        elif model_name == "Pose":
-            self.model = PoseModel()
-        elif model_name == "Face":
-            self.model = FaceModel()
-        elif model_name == "Holistic":
-            self.model = HolisticModel()
-        else:
-            self.model = HandsModel()
-        self.camera_thread.set_model(self.model)
-
-        self.camera_thread.frame_ready.connect(self.update_frame)
-
-        # Set model selector current text
-        self.model_selector.setCurrentText(model_name)
-
-        # Set camera index selection if available
-        cam_index = self.config.get("camera_index", 0)
-        cam_idx_found = False
-        for i in range(self.camera_selector.count()):
-            if self.camera_selector.itemData(i) == cam_index:
-                self.camera_selector.setCurrentIndex(i)
-                cam_idx_found = True
-                break
-        if not cam_idx_found and self.camera_selector.count() > 0:
-            self.camera_selector.setCurrentIndex(0)
-
-        # Layouts superiores
+        
+        self.model_selector.setEnabled(False)
+        self.camera_selector.setEnabled(False)
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(False)
+        
+        # ---- Layouts ----
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(QLabel("Modelo:"))
         controls_layout.addWidget(self.model_selector)
@@ -141,14 +99,57 @@ class MainWindow(QWidget):
         osc_layout.addWidget(QLabel("Puerto:"))
         osc_layout.addWidget(self.port_spin)
 
-        # Layout principal
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
         layout.addLayout(controls_layout)
         layout.addLayout(osc_layout)
         self.setLayout(layout)
+        
+        QTimer.singleShot(50, self.finish_setup)
 
-    # ---------- UI handlers ----------
+    def finish_setup(self):
+        """ Busca cámaras, conecta señales y habilita la UI. """
+        self.image_label.setText("Buscando cámaras...")
+        QApplication.processEvents()
+
+        self.populate_cameras()
+
+        self.image_label.setText("Listo para iniciar.")
+        self.image_label.setStyleSheet("")
+        
+        # --- Cargar modelo inicial guardado ---
+        model_name = self.config.get("model", "Hands")
+        self.change_model(model_name)
+        
+        # --- CONECTAR SEÑALES AHORA QUE TODO EXISTE ---
+        self.model_selector.currentTextChanged.connect(self.change_model)
+        self.camera_selector.currentIndexChanged.connect(self.change_camera)
+        self.start_button.clicked.connect(self.start_camera)
+        self.stop_button.clicked.connect(self.stop_camera)
+        self.osc_checkbox.stateChanged.connect(self.toggle_osc)
+        self.ip_edit.textChanged.connect(self.apply_osc_target)
+        self.port_spin.valueChanged.connect(self.apply_osc_target)
+        self.camera_thread.frame_ready.connect(self.update_frame)
+        self.camera_thread.enable_osc(self.osc_checkbox.isChecked())
+
+        # --- Restaurar estado guardado ---
+        self.model_selector.setCurrentText(model_name)
+        cam_index = self.config.get("camera_index", 0)
+        cam_idx_found = False
+        for i in range(self.camera_selector.count()):
+            if self.camera_selector.itemData(i) == cam_index:
+                self.camera_selector.setCurrentIndex(i)
+                cam_idx_found = True
+                break
+        if not cam_idx_found and self.camera_selector.count() > 0:
+            self.camera_selector.setCurrentIndex(0)
+            
+        # --- Habilitar UI ---
+        self.model_selector.setEnabled(True)
+        self.camera_selector.setEnabled(True)
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(True)
+
     def populate_cameras(self):
         for i in range(10):
             cap = cv2.VideoCapture(i)
@@ -170,12 +171,16 @@ class MainWindow(QWidget):
     def change_camera(self, index):
         cam_idx = self.camera_selector.itemData(index)
         if cam_idx is not None and cam_idx >= 0:
+            was_running = self.camera_thread.running
+            self.camera_thread.stop()
             self.camera_thread.set_camera_index(cam_idx)
+            if was_running:
+                self.camera_thread.start()
+
             self.config["camera_index"] = cam_idx
             save_config(self.config)
 
     def change_model(self, name):
-        # Instantiate the correct model class
         if name == "Hands":
             self.model = HandsModel()
         elif name == "Pose":
@@ -184,6 +189,7 @@ class MainWindow(QWidget):
             self.model = FaceModel()
         elif name == "Holistic":
             self.model = HolisticModel()
+        
         self.camera_thread.set_model(self.model)
         self.config["model"] = name
         save_config(self.config)
@@ -196,7 +202,6 @@ class MainWindow(QWidget):
         ip = self.ip_edit.text().strip()
         port = int(self.port_spin.value())
         self.osc_client.set_target(ip, port)
-        self.camera_thread.set_osc_client(self.osc_client)
         self.config["ip"] = ip
         self.config["port"] = port
         save_config(self.config)
@@ -204,7 +209,6 @@ class MainWindow(QWidget):
     def update_frame(self, frame_bgr):
         h, w, ch = frame_bgr.shape
         qimg = QImage(frame_bgr.data, w, h, ch * w, QImage.Format_BGR888)
-        # Scale with aspect ratio to fit the label
         pix = QPixmap.fromImage(qimg)
         pix = pix.scaled(self.image_label.width(), self.image_label.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.image_label.setPixmap(pix)
@@ -218,3 +222,4 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+

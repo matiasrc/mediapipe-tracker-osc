@@ -1,0 +1,16 @@
+Archivos de caché y compilados de Python
+pycache/
+*.pyc
+
+Carpetas de compilación de PyInstaller
+build/
+dist/
+
+Archivo de configuración local
+(Es mejor no subirlo si contiene datos sensibles o rutas específicas)
+config.json
+Archivos específicos del sistema operativo
+.DS_Store
+
+Archivos del editor de código
+.vscode/
