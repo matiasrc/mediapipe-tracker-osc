@@ -3,30 +3,31 @@
 Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, enviando datos vía **OSC** para usar en otros programas (ej. Pure Data, TouchDesigner, Max/MSP).
 
 ---
+
 ## 📖 Índice
 
-- [🚀 Requisitos previos](#-requisitos-previos)  
-- [💻 Cómo usar](#-cómo-usar)  
-  - [En Mac](#en-mac)  
-  - [En Windows](#en-windows)  
-- [📦 Detalles técnicos](#-detalles-técnicos)  
-- [📡 Datos enviados por OSC](#-datos-enviados-por-osc)  
-- [📑 Formato del Payload OSC](#-formato-del-payload-osc)  
-- [🛠️ Troubleshooting (Errores comunes)](#️-troubleshooting-errores-comunes)  
-- [📝 Notas](#-notas)  
+- [🚀 Requisitos previos](#-requisitos-previos)
+- [💻 Cómo usar](#-cómo-usar)
+  - [En Mac](#en-mac)
+  - [En Windows](#en-windows)
+- [📦 Detalles técnicos](#-detalles-técnicos)
+- [📡 Datos enviados por OSC](#-datos-enviados-por-osc)
+- [📑 Formato del Payload OSC](#-formato-del-payload-osc)
+- [🛠️ Troubleshooting (Errores comunes)](#️-troubleshooting-errores-comunes)
+- [📝 Notas](#-notas)
 
 ---
 
 ## 🚀 Requisitos previos
 
-* **Python 3.10**
+- **Python 3.10**
 
-  * **Mac**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-macos11.pkg)
-  * **Windows**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe)
+  - **Mac**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-macos11.pkg)
+  - **Windows (tambien funciona con python 3.11)**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe)
 
 ⚠️ En Windows, durante la instalación marcar la opción **"Add Python to PATH"**.
 
-* Una **cámara web** conectada al equipo.
+- Una **cámara web** conectada al equipo.
 
 ---
 
@@ -40,6 +41,7 @@ Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, envia
    ```bash
    chmod +x launch.sh
    ```
+
 3. Hacer doble click en `launch.sh`.
 4. La primera vez puede tardar un poco porque instala dependencias.
 5. Se abrirá la aplicación.
@@ -57,9 +59,9 @@ Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, envia
 
 ## 📦 Detalles técnicos
 
-* El script crea automáticamente un entorno virtual (`mediapipe-env`) en tu usuario.
-* Instala todas las dependencias necesarias (`mediapipe`, `opencv`, `python-osc`, etc.).
-* Cada vez que quieras abrir la app, solo tenés que hacer doble click en `launch.sh` (Mac) o `launch.bat` (Windows).
+- El script crea automáticamente un entorno virtual (`mediapipe-env`) en tu usuario.
+- Instala todas las dependencias necesarias (`mediapipe`, `opencv`, `python-osc`, etc.).
+- Cada vez que quieras abrir la app, solo tenés que hacer doble click en `launch.sh` (Mac) o `launch.bat` (Windows).
 
 ---
 
@@ -67,21 +69,21 @@ Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, envia
 
 ### Hands
 
-* **Landmarks:** 21 por mano.
-* **Datos por landmark:** `x (float), y (float), z (float), score (float)`
-* **Total por mano:** 84 valores (`21 × 4`).
+- **Landmarks:** 21 por mano.
+- **Datos por landmark:** `x (float), y (float), z (float), score (float)`
+- **Total por mano:** 84 valores (`21 × 4`).
 
 ### Pose
 
-* **Landmarks:** 33.
-* **Datos por landmark:** `x (float), y (float), z (float), score (float)`
-* **Total:** 132 valores (`33 × 4`).
+- **Landmarks:** 33.
+- **Datos por landmark:** `x (float), y (float), z (float), score (float)`
+- **Total:** 132 valores (`33 × 4`).
 
 ### Face
 
-* **Landmarks:** 468.
-* **Datos por landmark:** `x (float), y (float), score (float)`
-* **Total:** 1404 valores (`468 × 3`).
+- **Landmarks:** 468.
+- **Datos por landmark:** `x (float), y (float), score (float)`
+- **Total:** 1404 valores (`468 × 3`).
 
 ---
 
@@ -95,10 +97,10 @@ Orden de los datos enviados:
 4. `1.0` por cada objeto detectado (placeholder, float)
 5. Para cada landmark:
 
-   * `x (float)`
-   * `y (float)`
-   * `z (float)` (solo en manos y pose)
-   * `score (float)`
+   - `x (float)`
+   - `y (float)`
+   - `z (float)` (solo en manos y pose)
+   - `score (float)`
 
 Ejemplo de mensaje OSC para **manos**:
 
@@ -141,6 +143,6 @@ chmod +x launch.sh
 
 ## 📝 Notas
 
-* **No es necesario instalar nada más** aparte de Python 3.10.
-* Si ya tenías otra versión de Python instalada, **no hay problema** siempre y cuando también tengas Python 3.10.
-* La primera ejecución puede tardar porque instala librerías, luego abrirá mucho más rápido.
+- **No es necesario instalar nada más** aparte de Python 3.10.
+- Si ya tenías otra versión de Python instalada, **no hay problema** siempre y cuando también tengas Python 3.10.
+- La primera ejecución puede tardar porque instala librerías, luego abrirá mucho más rápido.
