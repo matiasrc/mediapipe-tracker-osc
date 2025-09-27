@@ -6,6 +6,10 @@ Carpetas de compilación de PyInstaller
 build/
 dist/
 
+Entorno virtual en windows
+mediapipe-env/
+
+
 Archivo de configuración local
 (Es mejor no subirlo si contiene datos sensibles o rutas específicas)
 config.json
@@ -14,3 +18,4 @@ Archivos específicos del sistema operativo
 
 Archivos del editor de código
 .vscode/
+
