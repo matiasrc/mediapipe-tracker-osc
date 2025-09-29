@@ -1,148 +1,103 @@
-# Mediapipe Tracker OSC
+# **MediaPipe Tracker OSC**
 
-Aplicación para el seguimiento de cara, manos y cuerpo con **Mediapipe**, enviando datos vía **OSC** para usar en otros programas (ej. Pure Data, TouchDesigner, Max/MSP).
+Esta es una aplicación de escritorio para Mac y Windows que utiliza la librería MediaPipe de Google para realizar seguimiento corporal, facial y de manos en tiempo real a través de una cámara web. Los datos de los puntos detectados (landmarks) se envían a través del protocolo OSC, permitiendo una fácil integración con entornos creativos como Processing, TouchDesigner, VVVV, Unity, etc.  
+**Autores y Aclaración Importante**
 
----
+* Este software fue desarrollado por **Matías Romero Costas** en colaboración con **Daniel Loaiza**.  
+* Por favor, ten en cuenta que este es un proyecto experimental. Se distribuye "tal cual", sin garantías de ningún tipo, explícitas o implícitas. No se ofrece soporte técnico. El uso de esta aplicación es de exclusiva responsabilidad del usuario.
 
-## 📖 Índice
+## **Características**
 
-- [🚀 Requisitos previos](#-requisitos-previos)
-- [💻 Cómo usar](#-cómo-usar)
-  - [En Mac](#en-mac)
-  - [En Windows](#en-windows)
-- [📦 Detalles técnicos](#-detalles-técnicos)
-- [📡 Datos enviados por OSC](#-datos-enviados-por-osc)
-- [📑 Formato del Payload OSC](#-formato-del-payload-osc)
-- [🛠️ Troubleshooting (Errores comunes)](#️-troubleshooting-errores-comunes)
-- [📝 Notas](#-notas)
+* **Seguimiento Multimodelo:** Soporta los modelos Hands, Pose, Face y Holistic de MediaPipe.  
+* **Envío por OSC:** Transmite los datos de los landmarks en un formato simple y fácil de parsear.  
+* **Interfaz Gráfica Sencilla:** Permite seleccionar el modelo, la cámara y configurar el destino OSC (IP y puerto) fácilmente.  
+* **Multiplataforma:** Compilado para funcionar como una aplicación nativa en macOS y Windows sin necesidad de instalar dependencias.
 
----
+## **¿Cómo Usar la Aplicación? (Para Usuarios Finales)**
 
-## 🚀 Requisitos previos
+No necesitas instalar Python ni ninguna librería para usar esta aplicación.
 
-- **Python 3.10**
+1. **Descarga la Versión para tu Sistema Operativo:**  
+   * Ve a la sección de [**Releases**](https://www.google.com/search?q=https://github.com/matiasrc/mediapipe-tracker-osc/releases) en este repositorio.  
+   * Descarga el archivo .zip para macOS o Windows.  
+2. **Descomprime y Ejecuta:**  
+   * **En macOS:** Descomprime el archivo y encontrarás MediapipeOSC.app. Haz doble clic para ejecutarla. (Es posible que la primera vez necesites hacer clic derecho \> Abrir).  
+   * **En Windows:** Descomprime el archivo y encontrarás una carpeta. Dentro, ejecuta MediapipeOSC.exe.  
+3. **Configura y Empieza a Rastrear:**  
+   * Selecciona el **Modelo** que deseas utilizar.  
+   * Elige la **Cámara** que quieres que use la aplicación.  
+   * Configura la **IP** y el **Puerto** del programa que recibirá los datos OSC.  
+   * Presiona **Iniciar**.
 
-  - **Mac**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-macos11.pkg)
-  - **Windows (tambien funciona con python 3.11)**: [Descargar aquí](https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe)
+## **Formato de los Mensajes OSC**
 
-⚠️ En Windows, durante la instalación marcar la opción **"Add Python to PATH"**.
+La aplicación envía los datos en un formato de array (lista de floats) para mayor eficiencia. Cada mensaje comienza con una cabecera de 4 valores que describe el contenido.
 
-- Una **cámara web** conectada al equipo.
+#### **Cabecera (Común a todos los mensajes)**
 
----
+* address: /faces/arr, /hands/arr o /poses/arr  
+* payload\[0\]: (int) Ancho del fotograma de la cámara.  
+* payload\[1\]: (int) Alto del fotograma de la cámara.  
+* payload\[2\]: (int) Número de instancias detectadas (caras, manos, etc.).  
+* payload\[3\]: (float) Puntuación general de la detección (actualmente siempre 1.0).
 
-## 💻 Cómo usar
+#### **Datos por Landmark (Punto)**
 
-### En **Mac**
+Después de la cabecera, los datos de cada landmark se envían en grupos de **3 valores**:
 
-1. Descargar la carpeta completa `mediapipe-tracker-osc`.
-2. Dar permisos de ejecución al script (solo la primera vez):
+* x: (float) Coordenada X normalizada (0.0 a 1.0).  
+* y: (float) Coordenada Y normalizada (0.0 a 1.0).  
+* score: (float) Puntuación de confianza o visibilidad del punto (0.0 a 1.0).
 
-   ```bash
-   chmod +x launch.sh
-   ```
+#### **Estructura del Payload por Modelo**
 
-3. Hacer doble click en `launch.sh`.
-4. La primera vez puede tardar un poco porque instala dependencias.
-5. Se abrirá la aplicación.
+| Modelo | Dirección OSC | Puntos por instancia | Valores por instancia | Total de valores (1 instancia) |
+| :---- | :---- | :---- | :---- | :---- |
+| **Face** | /faces/arr | 468 | 1404 (468 x 3\) | 1408 (1404 \+ cabecera) |
+| **Hands** | /hands/arr | 21 | 63 (21 x 3\) | 67 (63 \+ cabecera) |
+| **Pose** | /poses/arr | 17 | 51 (17 x 3\) | 55 (51 \+ cabecera) |
 
----
+Ejemplo para Manos (/hands/arr):  
+Si se detectan 2 manos, el payload se vería así:  
+\[ancho, alto, 2, 1.0, x1,y1,score1 ... (21 puntos mano 1), x1,y1,score1 ... (21 puntos mano 2)\]
 
-### En **Windows**
+## **Solución de Problemas (Errores Comunes)**
 
-1. Descargar la carpeta completa `mediapipe-tracker-osc`.
-2. Hacer doble click en `launch.bat`.
-3. La primera vez puede tardar unos minutos porque instala dependencias.
-4. Se abrirá la aplicación.
+* **La aplicación no se abre en macOS:**  
+  * Si al hacer doble clic te aparece un error de seguridad, haz **clic derecho** sobre MediapipeOSC.app y selecciona **Abrir**. Esto te permitirá autorizar la ejecución.  
+* **La aplicación se cierra inesperadamente al iniciar (macOS):**  
+  * La aplicación necesita permiso para acceder a la cámara. Ve a **Preferencias del Sistema \> Privacidad y Seguridad \> Cámara** y asegúrate de que MediapipeOSC (o tu Terminal, si ejecutas desde el código) tenga el permiso activado.  
+* **No se reciben datos en el programa receptor (Processing, TouchDesigner, etc.):**  
+  * Verifica que la **IP** y el **Puerto** en la aplicación coincidan exactamente con la IP y el puerto de escucha en tu programa receptor.  
+  * Si usas la IP 127.0.0.1, ambos programas deben estar en el mismo ordenador.  
+  * Asegúrate de que ningún **firewall** (de Windows o macOS) esté bloqueando la conexión.
 
----
+## **Para Desarrolladores (Compilar desde el Código Fuente)**
 
-## 📦 Detalles técnicos
+Si quieres modificar el código, necesitarás Python 3.10 y las dependencias del proyecto.
 
-- El script crea automáticamente un entorno virtual (`mediapipe-env`) en tu usuario.
-- Instala todas las dependencias necesarias (`mediapipe`, `opencv`, `python-osc`, etc.).
-- Cada vez que quieras abrir la app, solo tenés que hacer doble click en `launch.sh` (Mac) o `launch.bat` (Windows).
+1. **Clona el Repositorio:**  
+   git clone \[https://github.com/matiasrc/mediapipe-tracker-osc.git\](https://github.com/matiasrc/mediapipe-tracker-osc.git)  
+   cd mediapipe-tracker-osc
 
----
+2. Ejecuta el Script de Inicio:  
+   El script creará un entorno virtual e instalará las dependencias.  
+   * En macOS: sh launch.sh  
+   * En Windows: launch.bat
 
-## 📡 Datos enviados por OSC
+### **Compilar la Aplicación**
 
-### Hands
+Para crear los ejecutables autocontenidos, necesitarás pyinstaller.
 
-- **Landmarks:** 21 por mano.
-- **Datos por landmark:** `x (float), y (float), z (float), score (float)`
-- **Total por mano:** 84 valores (`21 × 4`).
+1. **Activa el Entorno Virtual** e instala PyInstaller:  
+   pip install pyinstaller
 
-### Pose
+2. **Ejecuta el Compilador:**  
+   * **Para macOS:** Usa el archivo main.spec para crear el paquete .app.  
+     pyinstaller main.spec
 
-- **Landmarks:** 33.
-- **Datos por landmark:** `x (float), y (float), z (float), score (float)`
-- **Total:** 132 valores (`33 × 4`).
+   * **Para Windows:** Usa el archivo main\_windows.spec.  
+     pyinstaller main\_windows.spec
 
-### Face
-
-- **Landmarks:** 468.
-- **Datos por landmark:** `x (float), y (float), score (float)`
-- **Total:** 1404 valores (`468 × 3`).
-
----
-
-## 📑 Formato del Payload OSC
-
-Orden de los datos enviados:
-
-1. `frame_w (int)`
-2. `frame_h (int)`
-3. `num_faces / num_hands / num_pose` (int)
-4. `1.0` por cada objeto detectado (placeholder, float)
-5. Para cada landmark:
-
-   - `x (float)`
-   - `y (float)`
-   - `z (float)` (solo en manos y pose)
-   - `score (float)`
-
-Ejemplo de mensaje OSC para **manos**:
-
-```
-/hands/arr [640, 480, 1, 1.0, x1, y1, z1, score1, x2, y2, z2, score2, ...]
-```
-
----
-
-## 🛠️ Troubleshooting (Errores comunes)
-
-### 1. Error: `ModuleNotFoundError: No module named 'pythonosc'`
-
-➡ Solución: Ejecutar manualmente:
-
-```bash
-pip install python-osc
-```
-
-### 2. Error en Windows: `ImportError: DLL load failed while importing _framework_bindings`
-
-➡ Esto ocurre si se usa Python 3.11 o superior.
-**Solución:** Instalar Python **3.10.x** y volver a ejecutar `launch.bat`.
-
-### 3. Error: `Permission denied` al ejecutar `launch.sh` en macOS
-
-➡ El script no tiene permisos de ejecución.
-**Solución:**
-
-```bash
-chmod +x launch.sh
-```
-
-### 4. Error: La cámara no se inicializa (`camera failed to properly initialize`)
-
-➡ Puede ocurrir si hay múltiples cámaras.
-**Solución:** Editar el código en `camera_thread.py` y probar con otro índice de cámara (`cv2.VideoCapture(0)` → `cv2.VideoCapture(1)`).
-
----
-
-## 📝 Notas
-
-- **No es necesario instalar nada más** aparte de Python 3.10.
-- Si ya tenías otra versión de Python instalada, **no hay problema** siempre y cuando también tengas Python 3.10.
-- La primera ejecución puede tardar porque instala librerías, luego abrirá mucho más rápido.
+3. **Encuentra el Ejecutable:**  
+   * La aplicación final estará en la carpeta dist/.
