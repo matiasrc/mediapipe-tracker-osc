@@ -11,8 +11,7 @@ datas = collect_data_files('mediapipe')
 # --- Añadir tus propios archivos de modelo y configuración ---
 # También nos aseguramos de que tus archivos locales se incluyan.
 datas += [
-    ('models', 'models'),
-    ('config.json', '.')
+    ('models', 'models')
 ]
 
 a = Analysis(
@@ -21,7 +20,7 @@ a = Analysis(
     binaries=[],
     datas=datas,  # Usamos la lista de datos que creamos arriba
     hiddenimports=[],
-    hookspath=[],
+    hookspath=['.'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],

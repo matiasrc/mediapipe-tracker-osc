@@ -19,11 +19,11 @@ Esta es una aplicación de escritorio para Mac y Windows que utiliza la librerí
 No necesitas instalar Python ni ninguna librería para usar esta aplicación.
 
 1. **Descarga la Versión para tu Sistema Operativo:**  
-   * Ve a la sección de [**Releases**](https://www.google.com/search?q=https://github.com/matiasrc/mediapipe-tracker-osc/releases) en este repositorio.  
+   * Ve a la sección de [**Releases**](https://github.com/matiasrc/mediapipe-tracker-osc/releases) en este repositorio.
    * Descarga el archivo .zip para macOS o Windows.  
 2. **Descomprime y Ejecuta:**  
    * **En macOS:** Descomprime el archivo y encontrarás MediapipeOSC.app. Haz doble clic para ejecutarla. (Es posible que la primera vez necesites hacer clic derecho \> Abrir).  
-   * **En Windows:** Descomprime el archivo y encontrarás una carpeta. Dentro, ejecuta MediapipeOSC.exe.  
+   * **En Windows:** Descomprime el archivo y encontrarás una carpeta. Dentro, ejecuta MediapipeOSC_windows.exe.
 3. **Configura y Empieza a Rastrear:**  
    * Selecciona el **Modelo** que deseas utilizar.  
    * Elige la **Cámara** que quieres que use la aplicación.  
@@ -151,6 +151,16 @@ Si quieres modificar el código, necesitarás Python 3.10 y las dependencias del
 ### **Compilar la Aplicación**
 
 Para crear los ejecutables autocontenidos, necesitarás pyinstaller.
+
+También puedes usar **Actions** en GitHub: ejecuta manualmente **Build macOS**
+o **Build Windows** y descarga el ZIP desde los artefactos de la ejecución.
+La versión de macOS es para Apple Silicon (arm64); la de Windows es para x64.
+Las compilaciones de macOS no están firmadas ni notarizadas por Apple.
+
+Para preparar una publicación, ejecuta **Create Release Draft** con una versión
+como `v1.0.0`. Se compilan ambas plataformas y se crea un borrador de release
+con los dos ZIP; revísalo y publícalo manualmente. El workflow crea la etiqueta
+si no existe y rechaza etiquetas existentes que apuntan a otro commit.
 
 1. **Activa el Entorno Virtual** e instala PyInstaller:  
    * pip install pyinstaller  
