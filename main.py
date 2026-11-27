@@ -218,8 +218,24 @@ class MainWindow(QWidget):
         event.accept()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    if sys.argv[1:] == ["--smoke-test"]:
+        import numpy as np
+
+        frame = np.zeros((256, 256, 3), dtype=np.uint8)
+        for model_class, attribute in (
+            (HandsModel, "hands"),
+            (PoseModel, "pose"),
+            (FaceModel, "mesh"),
+            (HolisticModel, "holistic"),
+        ):
+            model = model_class()
+            try:
+                model.process(frame)
+            finally:
+                getattr(model, attribute).close()
+    else:
+        app = QApplication(sys.argv)
+        window = MainWindow()
+        window.show()
+        sys.exit(app.exec_())
 

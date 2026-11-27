@@ -1,0 +1,90 @@
+name: Create Release Draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. v1.0.0 or 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-draft
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.normalize.outputs.tag }}
+    steps:
+      - name: Validate and normalize version
+        id: normalize
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          version="${VERSION_INPUT#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo '::error::Use a numeric version such as v1.0.0 or v1.0.'
+            exit 1
+          fi
+          printf 'tag=v%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+  build-windows:
+    needs: version
+    uses: ./.github/workflows/build-windows.yml
+
+  build-macos:
+    needs: version
+    uses: ./.github/workflows/build-macos.yml
+
+  create-draft:
+    needs: [version, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: MediapipeOSC-windows-x64
+          path: release-assets
+      - uses: actions/download-artifact@v4
+        with:
+          name: MediapipeOSC-macos-arm64
+          path: release-assets
+      - name: Verify packages and create draft
+        run: |
+          windows="release-assets/MediapipeOSC-windows-x64-$TAG.zip"
+          macos="release-assets/MediapipeOSC-macos-arm64-$TAG.zip"
+          mv release-assets/MediapipeOSC-windows-x64.zip "$windows"
+          mv release-assets/MediapipeOSC-macos-arm64.zip "$macos"
+          unzip -tq "$windows"
+          unzip -tq "$macos"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::A release or draft already exists for $TAG."
+            exit 1
+          fi
+          tag_ref="refs/tags/$TAG"
+          remote_refs="$(git ls-remote origin "$tag_ref" "$tag_ref^{}")"
+          if [[ -n "$remote_refs" ]]; then
+            tag_commit="$(awk -v ref="$tag_ref" '
+              $2 == ref { direct = $1 }
+              $2 == ref "^{}" { peeled = $1 }
+              END { print (peeled ? peeled : direct) }
+            ' <<< "$remote_refs")"
+            if [[ "$tag_commit" != "$GITHUB_SHA" ]]; then
+              echo "::error::$TAG already points to $tag_commit, but this run built $GITHUB_SHA."
+              exit 1
+            fi
+          else
+            git push origin "$GITHUB_SHA:$tag_ref"
+          fi
+          gh release create "$TAG" "$windows" "$macos" \
+            --verify-tag --draft --title "MediapipeOSC $TAG" --generate-notes

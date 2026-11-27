@@ -1,0 +1,36 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: arm64
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller==6.16.0
+      - name: Build application
+        run: python -m PyInstaller --noconfirm main.spec
+      - name: Test bundled models
+        timeout-minutes: 5
+        run: dist/MediapipeOSC.app/Contents/MacOS/MediapipeOSC --smoke-test
+      - name: Package application
+        run: |
+          ditto -c -k --keepParent dist/MediapipeOSC.app MediapipeOSC-macos-arm64.zip
+          unzip -tq MediapipeOSC-macos-arm64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MediapipeOSC-macos-arm64
+          path: MediapipeOSC-macos-arm64.zip
+          if-no-files-found: error
